@@ -215,6 +215,10 @@ if(CONFIG_EKF2_TERRAIN)
 	list(APPEND EKF_SRCS EKF/terrain_estimator/terrain_estimator.cpp)
 endif()
 
+if(CONFIG_EKF2_WIND)
+	list(APPEND EKF_SRCS EKF/wind.cpp)
+endif ()
+
 add_subdirectory(EKF)
 
 px4_add_module(
