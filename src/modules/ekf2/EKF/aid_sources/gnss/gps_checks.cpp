@@ -218,11 +218,21 @@ bool Ekf::runGnssChecks(const gnssSample &gps)
 	_gps_pos_prev.initReference(lat, lon, gps.time_us);
 	_gps_alt_prev = gps.alt;
 
-	// Check  the filtered difference between GPS and EKF vertical velocity
-	const float vz_diff_limit = 10.0f * _params.req_vdrift;
-	const float vertVel = math::constrain(gps.vel(2) - _state.vel(2), -vz_diff_limit, vz_diff_limit);
-	_gps_velD_diff_filt = vertVel * filter_coef + _gps_velD_diff_filt * (1.0f - filter_coef);
-	_gps_check_fail_status.flags.vspeed = (fabsf(_gps_velD_diff_filt) > _params.req_vdrift);
+	// Check the filtered difference between GPS and EKF vertical velocity
+	if (_filter_initialised
+	    && (isVerticalVelocityAidingActive() || isVerticalPositionAidingActive() || _control_status.flags.vehicle_at_rest)
+	   ) {
+		const float vz_diff_limit = 10.f * _params.req_vdrift;
+		const float vz_diff = math::constrain(gps.vel(2) - _state.vel(2), -vz_diff_limit, vz_diff_limit);
+		_gps_velD_diff_filt = vz_diff * filter_coef + _gps_velD_diff_filt * (1.f - filter_coef);
+
+		_gps_check_fail_status.flags.vspeed = (fabsf(_gps_velD_diff_filt) > _params.req_vdrift);
+
+	} else {
+		// reset
+		_gps_velD_diff_filt = 0.f;
+		_gps_check_fail_status.flags.vspeed = false;
+	}
 
 	// assume failed first time through
 	if (_last_gps_fail_us == 0) {
