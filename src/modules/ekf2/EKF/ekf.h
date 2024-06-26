@@ -135,7 +135,9 @@ public:
 
 	const Vector3f getFlowGyro() const { return _flow_sample_delayed.gyro_rate; }
 	const Vector3f &getFlowGyroBias() const { return _flow_gyro_bias; }
-	const Vector3f &getRefBodyRate() const { return _ref_body_rate; }
+
+	// Optical flow reference body rate, flow gyro has opposite sign convention
+	Vector3f getFlowRefBodyRate() const { return -_angular_velocity_delayed; }
 #endif // CONFIG_EKF2_OPTICAL_FLOW
 
 	float getHeadingInnov() const
@@ -549,7 +551,7 @@ private:
 	StateResets _state_reset_status{};	///< reset event monitoring structure containing velocity, position, height and yaw reset information
 	StateResetCounts _state_reset_count_prev{};
 
-	Vector3f _ang_rate_delayed_raw{};	///< uncorrected angular rate vector at fusion time horizon (rad/sec)
+	Vector3f _angular_velocity_delayed{};	///< corrected angular velocity vector at fusion time horizon (rad/sec)
 
 	StateSample _state{};		///< state struct of the ekf running at the delayed time horizon
 
@@ -601,7 +603,6 @@ private:
 	Vector3f _flow_gyro_bias{};	///< bias errors in optical flow sensor rate gyro outputs (rad/sec)
 	Vector2f _flow_vel_body{};	///< velocity from corrected flow measurement (body frame)(m/s)
 	Vector2f _flow_vel_ne{};		///< velocity from corrected flow measurement (local frame) (m/s)
-	Vector3f _ref_body_rate{};
 
 	Vector2f _flow_rate_compensated{}; ///< measured angular rate of the image about the X and Y body axes after removal of body rotation (rad/s), RH rotation is positive
 
@@ -847,7 +848,7 @@ private:
 	float calcOptFlowMeasVar(const flowSample &flow_sample) const;
 
 	// calculate optical flow body angular rate compensation
-	void calcOptFlowBodyRateComp(const imuSample &imu_delayed);
+	void calcOptFlowBodyRateComp(const imuSample &imu, flowSample &flow_sample);
 
 	float predictFlowRange() const;
 	Vector2f predictFlow(const Vector3f &flow_gyro) const;
