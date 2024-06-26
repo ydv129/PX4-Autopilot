@@ -205,8 +205,8 @@ void Ekf::stopFlowFusion()
 void Ekf::calcOptFlowBodyRateComp(const imuSample &imu_delayed)
 {
 	if (imu_delayed.delta_ang_dt > FLT_EPSILON) {
-		_ref_body_rate = -imu_delayed.delta_ang / imu_delayed.delta_ang_dt -
-				 getGyroBias(); // flow gyro has opposite sign convention
+		// flow gyro has opposite sign convention
+		_ref_body_rate = -(imu_delayed.delta_ang / imu_delayed.delta_ang_dt - getGyroBias());
 
 	} else {
 		_ref_body_rate.zero();
@@ -220,7 +220,7 @@ void Ekf::calcOptFlowBodyRateComp(const imuSample &imu_delayed)
 		_flow_sample_delayed.gyro_rate(2) = _ref_body_rate(2);
 	}
 
-	// calculate the bias estimate using  a combined LPF and spike filter
+	// calculate the bias estimate using a combined LPF and spike filter
 	_flow_gyro_bias = _flow_gyro_bias * 0.99f + matrix::constrain(_flow_sample_delayed.gyro_rate - _ref_body_rate, -0.1f,
 			  0.1f) * 0.01f;
 }
